@@ -1,0 +1,63 @@
+version: '3.3'
+services:
+  nginx:
+    build:
+      context: .
+      dockerfile: docker/Nginx.Dockerfile
+    ports:
+      - '80:80'
+    volumes:
+      - './:/var/www/test-job'
+    links:
+      - fpm
+      - mysql
+    depends_on:
+      - fpm
+      - mysql
+    networks:
+      - internal
+  fpm:
+    build:
+      context: .
+      dockerfile: docker/Fpm.Dockerfile
+    volumes:
+      - './:/var/www/test-job'
+    links:
+      - mysql
+      - rabbitmq
+    environment:
+      XDEBUG_CONFIG: remote_host=host.docker.internal remote_enable=1
+      PHP_IDE_CONFIG: serverName=Docker
+    networks:
+      - internal
+  mysql:
+    image: 'mysql:5.7'
+    ports:
+      - '33061:3306'
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_DATABASE=kbase_my
+    networks:
+      - internal
+  rabbitmq:
+    image: rabbitmq:3.8.25-management-alpine
+    ports:
+      - 5672:5672
+      - 15672:15672
+    volumes:
+      - ./docker/rabbitmq/data/:/var/lib/rabbitmq/
+      - ./docker/rabbitmq/log/:/var/log/rabbitmq/
+    environment:
+      RABBITMQ_ERLANG_COOKIE: secret-cookie
+      RABBITMQ_DEFAULT_USER: rabbituser
+      RABBITMQ_DEFAULT_PASS: password
+      RABBITMQ_DEFAULT_VHOST: rabbit-vh
+    networks:
+      - internal
+networks:
+  internal:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 192.168.143.0/28

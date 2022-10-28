@@ -1,0 +1,6 @@
+{
+    "require": {
+        "enqueue/amqp-lib": "^0.10.9",
+        "queue-interop/amqp-interop": "^0.8.2"
+    }
+}
